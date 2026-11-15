@@ -139,9 +139,13 @@ NAT，否则表现为"网卡连着、没有网"。Windows 主机侧正常 DHCP �
 
 ## 9. 蓝牙
 
-内核配置齐全（`CONFIG_BT=y`、`BREDR/LE/RFCOMM/BNEP/HCIUART_H4`），但**缺传输层驱动**
+内核配置齐全（`CONFIG_BT=y`、`BREDR/LE/RFCOMM/BNEP/HCIUART_H4`），但镜像里没有传输层驱动
 `sprdbt_tty`：`/dev/ttyBT0` 不存在、`/sys/class/bluetooth` 为空、设备树的
 `sprd-marlin3/sprd-mtty` 节点没有驱动绑定。
+
+给 7.3.1 重编（修掉 6 个驱动缺陷）后已实机验证：控制器上电、`btattach` 走 H4、8 秒扫描
+发现 11 个周边设备，WiFi 与 AirSIM 音频无回归。装载必须按 `insmod → mu300-bt-init →
+btattach → bluetoothd` 的顺序，跳过 `mu300-bt-init` 会只注册半个 `hci0`。
 
 详见 [U30AIR_1T_BLUETOOTH.md](U30AIR_1T_BLUETOOTH.md)。
 
@@ -153,6 +157,7 @@ NAT，否则表现为"网卡连着、没有网"。Windows 主机侧正常 DHCP �
   `vermagic` 与模块；
 - **短信**：没有系统验证，双卡下的 `AT+CMGS`（走 `mu300-atd` 的 CR/Ctrl-Z 协议）未测；
 - **2G/3G 回落**：没有测试环境，`AT+CESQ` 在非 SA 场景的回退逻辑只用桩验证过；
-- **蓝牙**：驱动已重编但**未在实机装载**，见蓝牙文档"状态"一节；
+- **蓝牙音频**：驱动与 BlueZ 已跑通（可扫描、可配对），但**蓝牙通话（HFP）与 A2DP 未适配**，
+  通话仍走 VoLTE；
 - **`/lib/modules/6.18.54` 下的旧模块**在 7.3.1 下不可用（`f2fs`、`xfs` 等需要时得重编）；
 - **通话质量**：对端反馈上行偏小，未解决，见第 4 节。
